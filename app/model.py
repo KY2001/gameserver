@@ -42,8 +42,15 @@ def create_user(name: str, leader_card_id: int) -> str:
 
 
 def _get_user_by_token(conn, token: str) -> Optional[SafeUser]:
-    # TODO: 実装
-    pass
+    result = conn.execute(
+        text("SELECT `id`, `name`, `leader_card_id` FROM `user` WHERE `token`=:token"),
+        dict(token=token),
+    )  # dict(token=token)は:tokenを置換する用の辞書？
+    try:  # 結果が帰ってくる=ユーザーが存在する場合
+        row = result.one()
+    except NoResultFound:  # ユーザーが存在しない場合
+        return None
+    return SafeUser.from_orm(row)
 
 
 def get_user_by_token(token: str) -> Optional[SafeUser]:
@@ -52,7 +59,11 @@ def get_user_by_token(token: str) -> Optional[SafeUser]:
 
 
 def update_user(token: str, name: str, leader_card_id: int) -> None:
-    # このコードを実装してもらう
     with engine.begin() as conn:
-        # TODO: 実装
-        pass
+        result = conn.execute(
+            text(
+                "UPDATE `user` SET `name`=:name, `leader_card_id`=:leader_card_id WHERE `token`=:token"
+            ),
+            dict(token=token, name=name, leader_card_id=leader_card_id),
+        )
+        # print(result)
