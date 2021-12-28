@@ -14,6 +14,7 @@ from .model import (
     SafeUser,
     WaitRoomStatus,
     join_room,
+    start_room,
 )
 
 app = FastAPI()
@@ -132,11 +133,9 @@ class RoomWaitResponse(BaseModel):
     room_user_list: list(RoomUser)
 
 
-'''
 @app.post("/room/wait", response_model=RoomWaitResponse)
 def wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
     """ルーム待機中"""
-'''
 
 
 class RoomStartRequest(BaseModel):
@@ -147,11 +146,11 @@ class RoomStartResponse(BaseModel):
     pass
 
 
-'''
 @app.post("/room/start", response_model=RoomStartResponse)
 def start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ開始, ホストが叩く"""
-'''
+    start_room(token, req.room_id)
+    return {}
 
 
 class RoomEndRequest(BaseModel):

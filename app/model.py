@@ -127,7 +127,8 @@ def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) ->
             text(
                 "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id,
+                 select_difficulty=select_difficulty),
         )
         return room_id
 
@@ -187,3 +188,16 @@ def join_room(token: str, room_id: int, select_difficulty: int) -> int:
                      select_difficulty=select_difficulty),
             )
             return 1
+
+
+"""
+def wait_room(token: str, room_id: int) -> list: # [status, [room_user_list]]
+"""
+
+
+def start_room(token: str, room_id: int) -> None:
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("UPDATE `room` SET `start`=1 WHERE `room_id`=:room_id"),
+            dict(room_id=room_id),
+        )
