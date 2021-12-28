@@ -6,4 +6,4 @@ format:
 	black app tests  # codeformat
 
 test:
-	pytest -sv tests
+	pytest -sv tests # User・Room APIのテストを実行, -s: テスト中の標準出力を表示, -v: より詳細なテスト結果を表示
