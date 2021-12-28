@@ -98,8 +98,20 @@ class RoomInfo(BaseModel):
     joined_user_count: int
     max_user_count: int
 
-    class Config:
-        orm_mode = True
+
+class RoomUser(BaseModel):
+    user_id: int
+    name: str
+    leader_card_id: int
+    select_difficulty: Live_Difficulty
+    is_me: bool
+    is_host: bool
+
+
+class ResultUser(BaseModel):
+    user_id: int
+    judge_count_list: list
+    score: int
 
 
 def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) -> int:
@@ -107,18 +119,15 @@ def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) ->
     user_id = result.id
     with engine.begin() as conn:
         result = conn.execute(  # 部屋の生成
-            text(
-                "INSERT INTO `room` (`live_id`) VALUES (:live_id)"
-            ),
+            text("INSERT INTO `room` (`live_id`) VALUES (:live_id)"),
             dict(live_id=live_id),
         )
         room_id = result.lastrowid
         conn.execute(  # オーナーの追加
             text(
-                "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`) VALUES (:user_id, :room_id, :select_difficulty)"
+                "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id,
-                 select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
         )
         return room_id
 
@@ -156,4 +165,11 @@ def get_room_info(live_id: int) -> list:
         return room_info_list
 
 
-# def join_room(room_id: int, select) -> int:
+"""
+def join_room(room_id: int, select_difficulty: Live_Difficulty) -> int:
+    with engine.begin() as conn:
+        result = conn.execute(  # 現在の人数を確認
+            text("SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id"),
+            dict(room_id=row.room_id),
+        )
+"""

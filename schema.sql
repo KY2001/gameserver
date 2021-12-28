@@ -20,6 +20,7 @@ CREATE TABLE `room_member` (
   `id` bigint NOT NULL AUTO_INCREMENT, -- user id
   `room_id` bigint NOT NULL,
   `select_difficulty` int NOT NULL,
+  `is_host` int NOT NULL DEFAULT 0, -- is_host?
   PRIMARY KEY (`room_id`),
   UNIQUE KEY `id` (`id`)
 );

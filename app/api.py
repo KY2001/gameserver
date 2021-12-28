@@ -5,7 +5,16 @@ from fastapi.security.http import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from . import model
-from .model import JoinRoomResult, Live_Difficulty, RoomInfo, SafeUser
+from .model import (
+    JoinRoomResult,
+    Live_Difficulty,
+    ResultUser,
+    RoomInfo,
+    RoomUser,
+    SafeUser,
+    WaitRoomStatus,
+    join_room,
+)
 
 app = FastAPI()
 
@@ -107,8 +116,73 @@ class RoomJoinResponse(BaseModel):
     join_room_result: JoinRoomResult
 
 
-@app.post("/room/list", response_model=RoomJoinResponse)
+'''
+@app.post("/room/join", response_model=RoomJoinResponse)
 def join(req: RoomJoinRequest, token: str = Depends(get_auth_token)):
-    """取得した内のどれかのルームに入場を試みる。"""
-    
+    """取得した内のどれかのルームに入場を試みる"""
+    join_room_result = join_room(req.room_id, req.select_difficulty)
+    return RoomJoinResponse(join_room_result=join_room_result)
+'''
 
+
+class RoomWaitRequest(BaseModel):
+    room_id: int
+
+
+class RoomWaitResponse(BaseModel):
+    status: WaitRoomStatus
+    room_user_list: list(RoomUser)
+
+
+'''
+@app.post("/room/wait", response_model=RoomWaitResponse)
+def join(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
+    """ルーム待機中"""
+'''
+
+
+class RoomStartRequest(BaseModel):
+    room_id: int
+
+
+class RoomStartResponse(BaseModel):
+    pass
+
+
+'''
+@app.post("/room/start", response_model=RoomStartResponse)
+def join(req: RoomStartRequest, token: str = Depends(get_auth_token)):
+    """ルームのライブ開始, ホストが叩く"""
+'''
+
+
+class RoomEndRequest(BaseModel):
+    room_id: int
+    judge_count_list: list(int)
+    score: int
+
+
+class RoomEndResponse(BaseModel):
+    pass
+
+
+'''
+@app.post("/room/end", response_model=RoomEndResponse)
+def join(req: RoomEndRequest, token: str = Depends(get_auth_token)):
+    """ルームのライブ終了, 各メンバーが叩く"""
+'''
+
+
+class RoomResultRequest(BaseModel):
+    room_id: int
+
+
+class RoomResultResponse(BaseModel):
+    result_user_list: list(ResultUser)
+
+
+'''
+@app.post("/room/result", response_model=RoomResultResponse)
+def join(req: RoomResultRequest, token: str = Depends(get_auth_token)):
+    """結果を受け取る"""
+'''
