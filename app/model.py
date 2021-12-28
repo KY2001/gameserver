@@ -108,26 +108,33 @@ def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) ->
     with engine.begin() as conn:
         result = conn.execute(  # 部屋の生成
             text(
-                "INSERT INTO `room` (`live_id`, `select_difficulty`) VALUES (:live_id, :select_difficulty)"
+                "INSERT INTO `room` (`live_id`) VALUES (:live_id)"
             ),
-            dict(live_id=live_id, select_difficulty=select_difficulty),
+            dict(live_id=live_id),
         )
         room_id = result.lastrowid
         conn.execute(  # オーナーの追加
             text(
-                "INSERT INTO `room_member` (`id`, `room_id`) VALUES (:user_id, :room_id)"
+                "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`) VALUES (:user_id, :room_id, :select_difficulty)"
             ),
-            dict(user_id=user_id, room_id=room_id),
+            dict(user_id=user_id, room_id=room_id,
+                 select_difficulty=select_difficulty),
         )
         return room_id
 
 
 def get_room_info(live_id: int) -> list:
     with engine.begin() as conn:
-        result = conn.execute(  # 部屋の生成
-            text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
-            dict(live_id=live_id),
-        )
+        if live_id == 0:  # room_id = 0のとき全てのルームを対象とする
+            result = conn.execute(  # 部屋の生成
+                text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
+                dict(live_id=live_id),
+            )
+        else:
+            result = conn.execute(  # 部屋の生成
+                text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
+                dict(live_id=live_id),
+            )
         rows = result.all()
         room_info_list = []
         for row in rows:
@@ -136,6 +143,8 @@ def get_room_info(live_id: int) -> list:
                 dict(room_id=row.room_id),
             )
             joined_user_count = result.one()["COUNT(`id`)"]
+            if joined_user_count == max_user_count:  # 満員のルームを除く
+                continue
             room_info_list.append(
                 RoomInfo(
                     room_id=joined_user_count,
@@ -145,3 +154,6 @@ def get_room_info(live_id: int) -> list:
                 )
             )
         return room_info_list
+
+
+# def join_room(room_id: int, select) -> int:
