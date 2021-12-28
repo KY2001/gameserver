@@ -165,11 +165,25 @@ def get_room_info(live_id: int) -> list:
         return room_info_list
 
 
-"""
-def join_room(room_id: int, select_difficulty: Live_Difficulty) -> int:
+def join_room(token: str, room_id: int, select_difficulty: int) -> int:
+    result = get_user_by_token(token)  # joinするユーザのidを取得
+    user_id = result.id
     with engine.begin() as conn:
         result = conn.execute(  # 現在の人数を確認
             text("SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id"),
-            dict(room_id=row.room_id),
+            dict(room_id=room_id),
         )
-"""
+        joined_user_count = result.one()["COUNT(`id`)"]
+        if joined_user_count >= 4:
+            return 2
+        elif joined_user_count == 0:
+            return 3
+        else:
+            conn.execute(
+                text(
+                    "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`) VALUES (:user_id, :room_id, :select_difficulty)"
+                ),
+                dict(user_id=user_id, room_id=room_id,
+                     select_difficulty=select_difficulty),
+            )
+            return 1

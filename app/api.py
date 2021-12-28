@@ -116,13 +116,11 @@ class RoomJoinResponse(BaseModel):
     join_room_result: JoinRoomResult
 
 
-'''
 @app.post("/room/join", response_model=RoomJoinResponse)
 def join(req: RoomJoinRequest, token: str = Depends(get_auth_token)):
     """取得した内のどれかのルームに入場を試みる"""
-    join_room_result = join_room(req.room_id, req.select_difficulty)
+    join_room_result = join_room(req.room_id, req.select_difficulty.value)
     return RoomJoinResponse(join_room_result=join_room_result)
-'''
 
 
 class RoomWaitRequest(BaseModel):
@@ -136,7 +134,7 @@ class RoomWaitResponse(BaseModel):
 
 '''
 @app.post("/room/wait", response_model=RoomWaitResponse)
-def join(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
+def wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
     """ルーム待機中"""
 '''
 
@@ -151,7 +149,7 @@ class RoomStartResponse(BaseModel):
 
 '''
 @app.post("/room/start", response_model=RoomStartResponse)
-def join(req: RoomStartRequest, token: str = Depends(get_auth_token)):
+def start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ開始, ホストが叩く"""
 '''
 
@@ -168,7 +166,7 @@ class RoomEndResponse(BaseModel):
 
 '''
 @app.post("/room/end", response_model=RoomEndResponse)
-def join(req: RoomEndRequest, token: str = Depends(get_auth_token)):
+def end(req: RoomEndRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ終了, 各メンバーが叩く"""
 '''
 
@@ -183,6 +181,6 @@ class RoomResultResponse(BaseModel):
 
 '''
 @app.post("/room/result", response_model=RoomResultResponse)
-def join(req: RoomResultRequest, token: str = Depends(get_auth_token)):
+def result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
     """結果を受け取る"""
 '''
