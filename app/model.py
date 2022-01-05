@@ -134,15 +134,17 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
 def get_room_info(live_id: int) -> list[RoomInfo]:
     with engine.begin() as conn:
         if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
-            result = conn.execute(text("SELECT `room_id` FROM `room`"))
+            result = conn.execute(text("SELECT `room_id`, `start` FROM `room`"))
         else:
             result = conn.execute(
-                text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
+                text("SELECT `room_id` FROM `room`, `start` WHERE `live_id`=:live_id"),
                 dict(live_id=live_id),
             )
         rows = result.all()
         room_info_list = []
         for row in rows:
+            if row.start:  # 既にスタート済みのルームは除く
+                continue
             result = conn.execute(
                 text("SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id"),
                 dict(room_id=row.room_id),
