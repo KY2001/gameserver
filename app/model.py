@@ -152,7 +152,7 @@ def get_room_info(live_id: int) -> list[RoomInfo]:
                 continue
             room_info_list.append(
                 RoomInfo(
-                    room_id=joined_user_count,
+                    room_id=row.room_id,
                     live_id=live_id,
                     joined_user_count=joined_user_count,
                     max_user_count=max_user_count,
@@ -251,6 +251,36 @@ def end_room(token: str, room_id: int, judge_count_list: list[int], score: int) 
                 miss=judge_count_list[4],
             ),
         )
+
+
+def get_result(token: str, room_id: int) -> list[ResultUser]:
+    with engine.begin() as conn:
+        result = conn.execute(
+            text(
+                "SELECT `id`, `score`, `perfect`, `great`, `good`, `bad`, `miss` FROM `room_member` WHERE `room_id`=:room_id"
+            ),
+            dict(room_id=room_id),
+        )
+        for member in result.all():  # 終わっていないメンバーが居る場合は空のリストを返す
+            if member.score is None:
+                return []
+        list_result_user = []
+        for member in result.all():
+            judge_count_list = [
+                member.perfect,
+                member.great,
+                member.good,
+                member.bad,
+                member.miss,
+            ]
+            list_result_user.append(
+                ResultUser(
+                    user_id=member.id,
+                    judge_count_list=judge_count_list,
+                    score=member.score,
+                )
+            )
+        return list_result_user
 
 
 def leave_room(token: str, room_id: int) -> None:

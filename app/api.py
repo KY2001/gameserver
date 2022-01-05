@@ -14,6 +14,7 @@ from .model import (
     SafeUser,
     WaitRoomStatus,
     end_room,
+    get_result,
     join_room,
     leave_room,
     start_room,
@@ -105,7 +106,7 @@ class RoomListResponse(BaseModel):
 
 
 @app.post("/room/list", response_model=RoomListResponse)
-def room_list(req: RoomListRequest, token: str = Depends(get_auth_token)):
+def room_list(req: RoomListRequest):
     """入場可能なルーム一覧を取得"""
     room_info_list = model.get_room_info(req.live_id)
     return RoomListResponse(room_info_list=room_info_list)
@@ -183,11 +184,11 @@ class RoomResultResponse(BaseModel):
     result_user_list: list[ResultUser]
 
 
-'''
 @app.post("/room/result", response_model=RoomResultResponse)
 def room_result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
     """結果を受け取る"""
-'''
+    result_user_list = get_result(token, req.room_id)
+    return RoomResultResponse(result_user_list=result_user_list)
 
 
 class RoomLeaveRequest(BaseModel):
