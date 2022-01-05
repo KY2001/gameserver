@@ -126,8 +126,7 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
             text(
                 "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id,
-                 select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
         )
         return room_id
 
@@ -135,8 +134,7 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
 def get_room_info(live_id: int) -> list[RoomInfo]:
     with engine.begin() as conn:
         if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
-            result = conn.execute(
-                text("SELECT `room_id`, `start` FROM `room`"))
+            result = conn.execute(text("SELECT `room_id`, `start` FROM `room`"))
         else:
             result = conn.execute(
                 text("SELECT `room_id`, `start` FROM `room` WHERE `live_id`=:live_id"),
@@ -220,8 +218,7 @@ def wait_room(token: str, room_id: int) -> list[WaitRoomStatus, list[RoomUser]]:
                         user_id=member.id,
                         name=row.name,
                         leader_card_id=row.leader_card_id,
-                        select_difficulty=Live_Difficulty(
-                            member.select_difficulty),
+                        select_difficulty=Live_Difficulty(member.select_difficulty),
                         is_host=True if member.is_host else False,
                         is_me=True if row.token == token else False,
                     )
@@ -258,37 +255,6 @@ def end_room(token: str, room_id: int, judge_count_list: list[int], score: int) 
         )
 
 
-def get_result(token: str, room_id: int) -> list[ResultUser]:
-    with engine.begin() as conn:
-        result = conn.execute(
-            text(
-                "SELECT `id`, `score`, `perfect`, `great`, `good`, `bad`, `miss` FROM `room_member` WHERE `room_id`=:room_id"
-            ),
-            dict(room_id=room_id),
-        )
-        rows = result.all()
-        for member in rows:  # 終わっていないメンバーが居る場合は空のリストを返す
-            if member.score is None:
-                return []
-        list_result_user = []
-        for member in rows:
-            judge_count_list = [
-                member.perfect,
-                member.great,
-                member.good,
-                member.bad,
-                member.miss,
-            ]
-            list_result_user.append(
-                ResultUser(
-                    user_id=member.id,
-                    judge_count_list=judge_count_list,
-                    score=member.score,
-                )
-            )
-        return list_result_user
-
-
 def leave_room(token: str, room_id: int) -> None:
     user_id = get_user_by_token(token).id  # leaveするユーザのidを取得
     with engine.begin() as conn:
@@ -321,3 +287,35 @@ def leave_room(token: str, room_id: int) -> None:
             text("DELETE FROM `room_member` WHERE `id`=:id"),
             dict(id=user_id),
         )
+
+
+def get_result(token: str, room_id: int) -> list[ResultUser]:
+    with engine.begin() as conn:
+        result = conn.execute(
+            text(
+                "SELECT `id`, `score`, `perfect`, `great`, `good`, `bad`, `miss` FROM `room_member` WHERE `room_id`=:room_id"
+            ),
+            dict(room_id=room_id),
+        )
+        rows = result.all()
+        for member in rows:  # 終わっていないメンバーが居る場合は空のリストを返す
+            if member.score is None:
+                return []
+        list_result_user = []
+        for member in rows:
+            judge_count_list = [
+                member.perfect,
+                member.great,
+                member.good,
+                member.bad,
+                member.miss,
+            ]
+            list_result_user.append(
+                ResultUser(
+                    user_id=member.id,
+                    judge_count_list=judge_count_list,
+                    score=member.score,
+                )
+            )
+        leave_room(token, room_id)  # 結果を受け取ったら部屋から退出
+        return list_result_user

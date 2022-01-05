@@ -83,7 +83,7 @@ def user_update(req: UserCreateRequest, token: str = Depends(get_auth_token)):
 
 class RoomCreateRequest(BaseModel):
     live_id: int
-    select_difficulity: Live_Difficulty
+    # select_difficulity: Live_Difficulty
 
 
 class RoomCreateResponse(BaseModel):
@@ -93,7 +93,7 @@ class RoomCreateResponse(BaseModel):
 @app.post("/room/create", response_model=RoomCreateResponse)
 def room_create(req: RoomCreateRequest, token: str = Depends(get_auth_token)):
     """新しい部屋の生成"""
-    room_id = model.create_room(token, req.live_id, req.select_difficulity.value)
+    room_id = model.create_room(token, req.live_id, 1)
     return RoomCreateResponse(room_id=room_id)
 
 
@@ -203,3 +203,4 @@ class RoomLeaveResponse(BaseModel):
 def room_leave(req: RoomLeaveRequest, token: str = Depends(get_auth_token)):
     """ルームを退出する, ホストが叩く場合は適当な同じ部屋のユーザーをホストにする"""
     leave_room(token, req.room_id)
+    return {}
