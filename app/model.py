@@ -114,7 +114,7 @@ class ResultUser(BaseModel):
     score: int
 
 
-def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) -> int:
+def create_room(token: str, live_id: int, select_difficulty: int) -> int:
     result = get_user_by_token(token)  # オーナーのidを取得
     user_id = result.id
     with engine.begin() as conn:
@@ -132,22 +132,19 @@ def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) ->
         return room_id
 
 
-def get_room_info(live_id: int) -> list:
+def get_room_info(live_id: int) -> list[RoomInfo]:
     with engine.begin() as conn:
         if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
-            result = conn.execute(  # 部屋の生成
-                text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
-                dict(live_id=live_id),
-            )
+            result = conn.execute(text("SELECT `room_id` FROM `room`"))
         else:
-            result = conn.execute(  # 部屋の生成
+            result = conn.execute(
                 text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
                 dict(live_id=live_id),
             )
         rows = result.all()
         room_info_list = []
         for row in rows:
-            result = conn.execute(  # 部屋の生成
+            result = conn.execute(
                 text("SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id"),
                 dict(room_id=row.room_id),
             )
@@ -202,4 +199,24 @@ def start_room(token: str, room_id: int) -> None:
         result = conn.execute(
             text("UPDATE `room` SET `start`=1 WHERE `room_id`=:room_id"),
             dict(room_id=room_id),
+        )
+
+
+def end_room(token: str, room_id: int, judge_count_list: list[int], score: int) -> None:
+    result = get_user_by_token(token)  # joinするユーザのidを取得
+    user_id = result.id
+    with engine.begin() as conn:
+        result = conn.execute(
+            text(
+                "UPDATE `room_member` SET `score`=:score, `perfect`=:perfect, `great`=:great, `good`=:good, `bad`=:bad, `miss`=:miss WHERE `id`=:user_id"
+            ),
+            dict(
+                score=score,
+                user_id=user_id,
+                perfect=judge_count_list[0],
+                great=judge_count_list[1],
+                good=judge_count_list[2],
+                bad=judge_count_list[3],
+                miss=judge_count_list[4],
+            ),
         )

@@ -22,5 +22,11 @@ CREATE TABLE `room_member` (
   `room_id` bigint NOT NULL, -- ルームID
   `select_difficulty` int NOT NULL, -- 選択難易度
   `is_host` int NOT NULL DEFAULT 0, -- ホストかどうか
+  `score` bigint, -- スコア
+  `perfect` int, -- 各判定数(perfect)
+  `great` int, -- 各判定数(great)
+  `good` int, -- 各判定数(good)
+  `bad` int, -- 各判定数(bad)
+  `miss` int, -- 各判定数(miss)
   UNIQUE KEY `id` (`id`)
 );

@@ -13,6 +13,7 @@ from .model import (
     RoomUser,
     SafeUser,
     WaitRoomStatus,
+    end_room,
     join_room,
     start_room,
 )
@@ -70,7 +71,7 @@ class Empty(BaseModel):
 
 
 @app.post("/user/update", response_model=Empty)
-def update(req: UserCreateRequest, token: str = Depends(get_auth_token)):
+def user_update(req: UserCreateRequest, token: str = Depends(get_auth_token)):
     """Update user attributes"""
     # print(req)
     model.update_user(token, req.user_name, req.leader_card_id)
@@ -87,9 +88,9 @@ class RoomCreateResponse(BaseModel):
 
 
 @app.post("/room/create", response_model=RoomCreateResponse)
-def create(req: RoomCreateRequest, token: str = Depends(get_auth_token)):
+def room_create(req: RoomCreateRequest, token: str = Depends(get_auth_token)):
     """新しい部屋の生成"""
-    room_id = model.create_room(token, req.live_id, req.select_difficulity)
+    room_id = model.create_room(token, req.live_id, req.select_difficulity.value)
     return RoomCreateResponse(room_id=room_id)
 
 
@@ -102,10 +103,10 @@ class RoomListResponse(BaseModel):
 
 
 @app.post("/room/list", response_model=RoomListResponse)
-def list(req: RoomListRequest, token: str = Depends(get_auth_token)):
+def room_list(req: RoomListRequest, token: str = Depends(get_auth_token)):
     """入場可能なルーム一覧を取得"""
     room_info_list = model.get_room_info(req.live_id)
-    return RoomCreateResponse(room_info_list=room_info_list)
+    return RoomListResponse(room_info_list=room_info_list)
 
 
 class RoomJoinRequest(BaseModel):
@@ -118,9 +119,9 @@ class RoomJoinResponse(BaseModel):
 
 
 @app.post("/room/join", response_model=RoomJoinResponse)
-def join(req: RoomJoinRequest, token: str = Depends(get_auth_token)):
+def room_join(req: RoomJoinRequest, token: str = Depends(get_auth_token)):
     """取得した内のどれかのルームに入場を試みる"""
-    join_room_result = join_room(req.room_id, req.select_difficulty.value)
+    join_room_result = join_room(token, req.room_id, req.select_difficulty.value)
     return RoomJoinResponse(join_room_result=join_room_result)
 
 
@@ -130,11 +131,11 @@ class RoomWaitRequest(BaseModel):
 
 class RoomWaitResponse(BaseModel):
     status: WaitRoomStatus
-    room_user_list: list(RoomUser)
+    room_user_list: list[RoomUser]
 
 
 @app.post("/room/wait", response_model=RoomWaitResponse)
-def wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
+def room_wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
     """ルーム待機中"""
 
 
@@ -147,7 +148,7 @@ class RoomStartResponse(BaseModel):
 
 
 @app.post("/room/start", response_model=RoomStartResponse)
-def start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
+def room_start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ開始, ホストが叩く"""
     start_room(token, req.room_id)
     return {}
@@ -155,7 +156,7 @@ def start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
 
 class RoomEndRequest(BaseModel):
     room_id: int
-    judge_count_list: list(int)
+    judge_count_list: list[int]
     score: int
 
 
@@ -163,11 +164,11 @@ class RoomEndResponse(BaseModel):
     pass
 
 
-'''
 @app.post("/room/end", response_model=RoomEndResponse)
-def end(req: RoomEndRequest, token: str = Depends(get_auth_token)):
+def room_end(req: RoomEndRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ終了, 各メンバーが叩く"""
-'''
+    end_room(token, req.room_id, req.judge_count_list, req.score)
+    return {}
 
 
 class RoomResultRequest(BaseModel):
@@ -175,11 +176,11 @@ class RoomResultRequest(BaseModel):
 
 
 class RoomResultResponse(BaseModel):
-    result_user_list: list(ResultUser)
+    result_user_list: list[ResultUser]
 
 
 '''
 @app.post("/room/result", response_model=RoomResultResponse)
-def result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
+def room_result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
     """結果を受け取る"""
 '''
