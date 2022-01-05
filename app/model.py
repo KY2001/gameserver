@@ -10,9 +10,6 @@ from sqlalchemy.exc import NoResultFound
 
 from .db import engine
 
-# from .api import Live_Difficulty
-
-
 max_user_count = 4  # 部屋の最大人数
 
 
