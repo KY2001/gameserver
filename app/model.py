@@ -115,8 +115,7 @@ class ResultUser(BaseModel):
 
 
 def create_room(token: str, live_id: int, select_difficulty: int) -> int:
-    result = get_user_by_token(token)  # オーナーのidを取得
-    user_id = result.id
+    user_id = get_user_by_token(token).id  # ホストのユーザidを取得
     with engine.begin() as conn:
         result = conn.execute(  # 部屋の生成
             text("INSERT INTO `room` (`live_id`) VALUES (:live_id)"),
@@ -163,8 +162,7 @@ def get_room_info(live_id: int) -> list[RoomInfo]:
 
 
 def join_room(token: str, room_id: int, select_difficulty: int) -> int:
-    result = get_user_by_token(token)  # joinするユーザのidを取得
-    user_id = result.id
+    user_id = get_user_by_token(token).id  # joinするユーザのidを取得
     with engine.begin() as conn:
         result = conn.execute(  # 現在の人数を確認
             text("SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id"),
@@ -237,8 +235,7 @@ def start_room(token: str, room_id: int) -> None:
 
 
 def end_room(token: str, room_id: int, judge_count_list: list[int], score: int) -> None:
-    result = get_user_by_token(token)  # joinするユーザのidを取得
-    user_id = result.id
+    user_id = get_user_by_token(token).id  # endするユーザのidを取得
     with engine.begin() as conn:
         result = conn.execute(
             text(
@@ -253,4 +250,38 @@ def end_room(token: str, room_id: int, judge_count_list: list[int], score: int) 
                 bad=judge_count_list[3],
                 miss=judge_count_list[4],
             ),
+        )
+
+
+def leave_room(token: str, room_id: int) -> None:
+    user_id = get_user_by_token(token).id  # leaveするユーザのidを取得
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("SELECT `id`, `is_host` FROM `room_member` WHERE `room_id`=:room_id"),
+            dict(room_id=room_id),
+        )
+        rows = result.all()
+        if len(rows) == 1:  # leaveするユーザーしか残っていない -> ルームを解散
+            result = conn.execute(  # ルームを削除
+                text("DELETE FROM `room` WHERE `room_id`=:room_id"),
+                dict(room_id=room_id),
+            )
+        else:
+            for member in rows:
+                if (
+                    member.id == user_id and member.is_host
+                ):  # leaveするユーザーがホストの場合 -> ホストを譲る
+                    for member2 in rows:
+                        if member2.id != user_id:
+                            result = conn.execute(
+                                text(
+                                    "UPDATE `room_member` SET `is_host`=1 WHERE `id`=:id"
+                                ),
+                                dict(id=member2.id),
+                            )
+                            break
+                    break
+        result = conn.execute(  # ユーザーをルームから削除
+            text("DELETE FROM `room_member` WHERE `id`=:id"),
+            dict(id=user_id),
         )

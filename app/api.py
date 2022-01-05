@@ -15,6 +15,7 @@ from .model import (
     WaitRoomStatus,
     end_room,
     join_room,
+    leave_room,
     start_room,
     wait_room,
 )
@@ -187,3 +188,17 @@ class RoomResultResponse(BaseModel):
 def room_result(req: RoomResultRequest, token: str = Depends(get_auth_token)):
     """結果を受け取る"""
 '''
+
+
+class RoomLeaveRequest(BaseModel):
+    room_id: int
+
+
+class RoomLeaveResponse(BaseModel):
+    pass
+
+
+@app.post("/room/leave", response_model=RoomLeaveResponse)
+def room_leave(req: RoomLeaveRequest, token: str = Depends(get_auth_token)):
+    """ルームを退出する, ホストが叩く場合は適当な同じ部屋のユーザーをホストにする"""
+    leave_room(token, req.room_id)
