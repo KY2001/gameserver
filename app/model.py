@@ -127,15 +127,14 @@ def create_room(token: str, live_id: int, select_difficulty: Live_Difficulty) ->
             text(
                 "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id,
-                 select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
         )
         return room_id
 
 
 def get_room_info(live_id: int) -> list:
     with engine.begin() as conn:
-        if live_id == 0:  # room_id = 0のとき全てのルームを対象とする
+        if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
             result = conn.execute(  # 部屋の生成
                 text("SELECT `room_id` FROM `room` WHERE `live_id`=:live_id"),
                 dict(live_id=live_id),
@@ -184,8 +183,11 @@ def join_room(token: str, room_id: int, select_difficulty: int) -> int:
                 text(
                     "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`) VALUES (:user_id, :room_id, :select_difficulty)"
                 ),
-                dict(user_id=user_id, room_id=room_id,
-                     select_difficulty=select_difficulty),
+                dict(
+                    user_id=user_id,
+                    room_id=room_id,
+                    select_difficulty=select_difficulty,
+                ),
             )
             return 1
 
