@@ -189,9 +189,43 @@ def join_room(token: str, room_id: int, select_difficulty: int) -> int:
             return 1
 
 
-"""
-def wait_room(token: str, room_id: int) -> list: # [status, [room_user_list]]
-"""
+def wait_room(token: str, room_id: int) -> list[WaitRoomStatus, list[RoomUser]]:
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("SELECT `start` FROM `room` WHERE `room_id`=:room_id"),
+            dict(room_id=room_id),
+        )
+        try:  # 結果が帰ってくる=部屋が存在する場合
+            row = result.one()
+            status = WaitRoomStatus(row.start + 1)
+            result = conn.execute(
+                text(
+                    "SELECT `id`, `select_difficulty`, `is_host` FROM `room_member` WHERE `room_id`=:room_id"
+                ),
+                dict(room_id=room_id),
+            )
+            list_room_use = []
+            for member in result.all():
+                result_user = conn.execute(
+                    text(
+                        "SELECT `name`, `leader_card_id`, `token` FROM `user` WHERE `id`=:id"
+                    ),
+                    dict(id=member.id),
+                )
+                row = result_user.one()
+                list_room_use.append(
+                    RoomUser(
+                        user_id=member.id,
+                        name=row.name,
+                        leader_card_id=row.leader_card_id,
+                        select_difficulty=Live_Difficulty(member.select_difficulty),
+                        is_host=True if member.is_host else False,
+                        is_me=True if row.token == token else False,
+                    )
+                )
+            return [status, list_room_use]
+        except NoResultFound:  # 部屋が解散した場合
+            return [3, []]
 
 
 def start_room(token: str, room_id: int) -> None:

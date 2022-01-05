@@ -16,6 +16,7 @@ from .model import (
     end_room,
     join_room,
     start_room,
+    wait_room,
 )
 
 app = FastAPI()
@@ -137,6 +138,8 @@ class RoomWaitResponse(BaseModel):
 @app.post("/room/wait", response_model=RoomWaitResponse)
 def room_wait(req: RoomWaitRequest, token: str = Depends(get_auth_token)):
     """ルーム待機中"""
+    res = wait_room(token, req.room_id)
+    return RoomWaitResponse(status=res[0], room_user_list=res[1])
 
 
 class RoomStartRequest(BaseModel):
