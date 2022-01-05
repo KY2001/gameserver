@@ -126,7 +126,8 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
             text(
                 "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id,
+                 select_difficulty=select_difficulty),
         )
         return room_id
 
@@ -134,10 +135,11 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
 def get_room_info(live_id: int) -> list[RoomInfo]:
     with engine.begin() as conn:
         if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
-            result = conn.execute(text("SELECT `room_id`, `start` FROM `room`"))
+            result = conn.execute(
+                text("SELECT `room_id`, `start` FROM `room`"))
         else:
             result = conn.execute(
-                text("SELECT `room_id` FROM `room`, `start` WHERE `live_id`=:live_id"),
+                text("SELECT `room_id`, `start` FROM `room` WHERE `live_id`=:live_id"),
                 dict(live_id=live_id),
             )
         rows = result.all()
@@ -218,7 +220,8 @@ def wait_room(token: str, room_id: int) -> list[WaitRoomStatus, list[RoomUser]]:
                         user_id=member.id,
                         name=row.name,
                         leader_card_id=row.leader_card_id,
-                        select_difficulty=Live_Difficulty(member.select_difficulty),
+                        select_difficulty=Live_Difficulty(
+                            member.select_difficulty),
                         is_host=True if member.is_host else False,
                         is_me=True if row.token == token else False,
                     )
