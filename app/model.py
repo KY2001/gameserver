@@ -261,11 +261,12 @@ def get_result(token: str, room_id: int) -> list[ResultUser]:
             ),
             dict(room_id=room_id),
         )
-        for member in result.all():  # 終わっていないメンバーが居る場合は空のリストを返す
+        rows = result.all()
+        for member in rows:  # 終わっていないメンバーが居る場合は空のリストを返す
             if member.score is None:
                 return []
         list_result_user = []
-        for member in result.all():
+        for member in rows:
             judge_count_list = [
                 member.perfect,
                 member.great,
