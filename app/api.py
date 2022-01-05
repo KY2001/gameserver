@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from . import model
 from .model import (
     JoinRoomResult,
-    Live_Difficulty,
+    LiveDifficulty,
     ResultUser,
     RoomInfo,
     RoomUser,
@@ -83,7 +83,7 @@ def user_update(req: UserCreateRequest, token: str = Depends(get_auth_token)):
 
 class RoomCreateRequest(BaseModel):
     live_id: int
-    # select_difficulity: Live_Difficulty
+    select_difficulty: LiveDifficulty
 
 
 class RoomCreateResponse(BaseModel):
@@ -93,7 +93,7 @@ class RoomCreateResponse(BaseModel):
 @app.post("/room/create", response_model=RoomCreateResponse)
 def room_create(req: RoomCreateRequest, token: str = Depends(get_auth_token)):
     """新しい部屋の生成"""
-    room_id = model.create_room(token, req.live_id, 1)
+    room_id = model.create_room(token, req.live_id, req.select_difficulty.value)
     return RoomCreateResponse(room_id=room_id)
 
 
@@ -114,7 +114,7 @@ def room_list(req: RoomListRequest):
 
 class RoomJoinRequest(BaseModel):
     room_id: int
-    select_difficulty: Live_Difficulty
+    select_difficulty: LiveDifficulty
 
 
 class RoomJoinResponse(BaseModel):
@@ -148,11 +148,7 @@ class RoomStartRequest(BaseModel):
     room_id: int
 
 
-class RoomStartResponse(BaseModel):
-    pass
-
-
-@app.post("/room/start", response_model=RoomStartResponse)
+@app.post("/room/start", response_model=Empty)
 def room_start(req: RoomStartRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ開始, ホストが叩く"""
     start_room(token, req.room_id)
@@ -165,11 +161,7 @@ class RoomEndRequest(BaseModel):
     score: int
 
 
-class RoomEndResponse(BaseModel):
-    pass
-
-
-@app.post("/room/end", response_model=RoomEndResponse)
+@app.post("/room/end", response_model=Empty)
 def room_end(req: RoomEndRequest, token: str = Depends(get_auth_token)):
     """ルームのライブ終了, 各メンバーが叩く"""
     end_room(token, req.room_id, req.judge_count_list, req.score)
@@ -195,11 +187,7 @@ class RoomLeaveRequest(BaseModel):
     room_id: int
 
 
-class RoomLeaveResponse(BaseModel):
-    pass
-
-
-@app.post("/room/leave", response_model=RoomLeaveResponse)
+@app.post("/room/leave", response_model=Empty)
 def room_leave(req: RoomLeaveRequest, token: str = Depends(get_auth_token)):
     """ルームを退出する, ホストが叩く場合は適当な同じ部屋のユーザーをホストにする"""
     leave_room(token, req.room_id)

@@ -10,7 +10,7 @@ from sqlalchemy.exc import NoResultFound
 
 from .db import engine
 
-# from app.api import Live_Difficulty
+# from .api import Live_Difficulty
 
 
 max_user_count = 4  # 部屋の最大人数
@@ -71,22 +71,21 @@ def update_user(token: str, name: str, leader_card_id: int) -> None:
             ),
             dict(token=token, name=name, leader_card_id=leader_card_id),
         )
-        # print(result.lastrowid)
 
 
-class Live_Difficulty(Enum):
+class LiveDifficulty(IntEnum):
     normal = 1
     hard = 2
 
 
-class JoinRoomResult(Enum):
+class JoinRoomResult(IntEnum):
     OK = 1
     RoomFull = 2
     Disbanded = 3
     OtherError = 4
 
 
-class WaitRoomStatus(Enum):
+class WaitRoomStatus(IntEnum):
     Waiting = 1
     LiveStart = 2
     Dissolution = 3
@@ -103,7 +102,7 @@ class RoomUser(BaseModel):
     user_id: int
     name: str
     leader_card_id: int
-    select_difficulty: Live_Difficulty
+    select_difficulty: LiveDifficulty
     is_me: bool
     is_host: bool
 
@@ -218,7 +217,7 @@ def wait_room(token: str, room_id: int) -> list[WaitRoomStatus, list[RoomUser]]:
                         user_id=member.id,
                         name=row.name,
                         leader_card_id=row.leader_card_id,
-                        select_difficulty=Live_Difficulty(member.select_difficulty),
+                        select_difficulty=LiveDifficulty(member.select_difficulty),
                         is_host=True if member.is_host else False,
                         is_me=True if row.token == token else False,
                     )
