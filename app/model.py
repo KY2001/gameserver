@@ -130,10 +130,10 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
 def get_room_info(live_id: int) -> list[RoomInfo]:
     with engine.begin() as conn:
         if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
-            result = conn.execute(text("SELECT `room_id`, `start` FROM `room`"))
+            result = conn.execute(text("SELECT `room_id`, `live_id`, `start` FROM `room`"))
         else:
             result = conn.execute(
-                text("SELECT `room_id`, `start` FROM `room` WHERE `live_id`=:live_id"),
+                text("SELECT `room_id`, `start`, `live_id` FROM `room` WHERE `live_id`=:live_id"),
                 dict(live_id=live_id),
             )
         rows = result.all()
@@ -151,7 +151,7 @@ def get_room_info(live_id: int) -> list[RoomInfo]:
             room_info_list.append(
                 RoomInfo(
                     room_id=row.room_id,
-                    live_id=live_id,
+                    live_id=row.live_id,
                     joined_user_count=joined_user_count,
                     max_user_count=max_user_count,
                 )
