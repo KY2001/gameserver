@@ -30,17 +30,22 @@ class SafeUser(BaseModel):
 
 def create_user(name: str, leader_card_id: int) -> str:
     """Create new user and returns their token"""
-    token = str(uuid.uuid4())
-    # NOTE: tokenが衝突したらリトライする必要がある.
-    with engine.begin() as conn:
-        result = conn.execute(
-            text(
-                "INSERT INTO `user` (name, token, leader_card_id) VALUES (:name, :token, :leader_card_id)"
-            ),
-            {"name": name, "token": token, "leader_card_id": leader_card_id},
-        )
-        # print(result.lastrowid)
-    return token
+    while True:
+        token = str(uuid.uuid4())
+        with engine.begin() as conn:
+            result = conn.execute(
+                text("SELECT * FROM `user` WHERE `token`=:token"),
+                dict(token=token)
+            )
+            if len(result.all()):  # tokenが衝突したらリトライ
+                continue
+            result = conn.execute(
+                text(
+                    "INSERT INTO `user` (name, token, leader_card_id) VALUES (:name, :token, :leader_card_id)"
+                ),
+                {"name": name, "token": token, "leader_card_id": leader_card_id},
+            )
+        return token
 
 
 def _get_user_by_token(conn, token: str) -> Optional[SafeUser]:
@@ -122,7 +127,8 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
             text(
                 "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id,
+                 select_difficulty=select_difficulty),
         )
         return room_id
 
@@ -130,10 +136,14 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
 def get_room_info(live_id: int) -> list[RoomInfo]:
     with engine.begin() as conn:
         if live_id == 0:  # live_id = 0のとき全てのルームを対象とする
-            result = conn.execute(text("SELECT `room_id`, `live_id`, `start` FROM `room`"))
+            result = conn.execute(
+                text("SELECT `room_id`, `live_id`, `start` FROM `room`")
+            )
         else:
             result = conn.execute(
-                text("SELECT `room_id`, `start`, `live_id` FROM `room` WHERE `live_id`=:live_id"),
+                text(
+                    "SELECT `room_id`, `start`, `live_id` FROM `room` WHERE `live_id`=:live_id"
+                ),
                 dict(live_id=live_id),
             )
         rows = result.all()
@@ -214,7 +224,8 @@ def wait_room(token: str, room_id: int) -> list[WaitRoomStatus, list[RoomUser]]:
                         user_id=member.id,
                         name=row.name,
                         leader_card_id=row.leader_card_id,
-                        select_difficulty=LiveDifficulty(member.select_difficulty),
+                        select_difficulty=LiveDifficulty(
+                            member.select_difficulty),
                         is_host=True if member.is_host else False,
                         is_me=True if row.token == token else False,
                     )
@@ -313,5 +324,5 @@ def get_result(token: str, room_id: int) -> list[ResultUser]:
                     score=member.score,
                 )
             )
-        leave_room(token, room_id)  # 結果を受け取ったら部屋から退出
+        leave_room(token, room_id)  # 結果を受け取ったら部屋から退出 → 部屋も自動的に削除
         return list_result_user
