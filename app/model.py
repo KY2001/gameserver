@@ -34,8 +34,7 @@ def create_user(name: str, leader_card_id: int) -> str:
         token = str(uuid.uuid4())
         with engine.begin() as conn:
             result = conn.execute(
-                text("SELECT * FROM `user` WHERE `token`=:token"),
-                dict(token=token)
+                text("SELECT * FROM `user` WHERE `token`=:token"), dict(token=token)
             )
             if len(result.all()):  # tokenが衝突したらリトライ
                 continue
@@ -127,8 +126,7 @@ def create_room(token: str, live_id: int, select_difficulty: int) -> int:
             text(
                 "INSERT INTO `room_member` (`id`, `room_id`, `select_difficulty`, `is_host`) VALUES (:user_id, :room_id, :select_difficulty, 1)"
             ),
-            dict(user_id=user_id, room_id=room_id,
-                 select_difficulty=select_difficulty),
+            dict(user_id=user_id, room_id=room_id, select_difficulty=select_difficulty),
         )
         return room_id
 
@@ -173,13 +171,15 @@ def join_room(token: str, room_id: int, select_difficulty: int) -> int:
     user_id = get_user_by_token(token).id  # joinするユーザのidを取得
     with engine.begin() as conn:
         result = conn.execute(  # 現在の人数を確認
-            text("SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id"),
+            text(
+                "SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id FOR UPDATE"
+            ),  #  悲観的ロック
             dict(room_id=room_id),
         )
         joined_user_count = result.one()["COUNT(`id`)"]
-        if joined_user_count >= 4:
+        if joined_user_count >= 4:  # 満員
             return 2
-        elif joined_user_count == 0:
+        elif joined_user_count == 0:  # 既に解散済み
             return 3
         else:
             conn.execute(
@@ -224,8 +224,7 @@ def wait_room(token: str, room_id: int) -> list[WaitRoomStatus, list[RoomUser]]:
                         user_id=member.id,
                         name=row.name,
                         leader_card_id=row.leader_card_id,
-                        select_difficulty=LiveDifficulty(
-                            member.select_difficulty),
+                        select_difficulty=LiveDifficulty(member.select_difficulty),
                         is_host=True if member.is_host else False,
                         is_me=True if row.token == token else False,
                     )
