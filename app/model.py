@@ -29,7 +29,7 @@ class SafeUser(BaseModel):
 
 
 def create_user(name: str, leader_card_id: int) -> str:
-    """Create new user and returns their token"""
+    """新しいユーザーを作成して生成したトークンを返す"""
     while True:
         token = str(uuid.uuid4())
         with engine.begin() as conn:
@@ -173,7 +173,7 @@ def join_room(token: str, room_id: int, select_difficulty: int) -> int:
         result = conn.execute(  # 現在の人数を確認
             text(
                 "SELECT COUNT(`id`) FROM `room_member` WHERE `room_id`=:room_id FOR UPDATE"
-            ),  #  悲観的ロック
+            ),  # 悲観的ロック
             dict(room_id=room_id),
         )
         joined_user_count = result.one()["COUNT(`id`)"]

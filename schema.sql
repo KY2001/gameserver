@@ -9,10 +9,10 @@ CREATE TABLE `user` (
 
 DROP TABLE IF EXISTS `room`;
 CREATE TABLE `room` (
-    `room_id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY, -- ルームID
-    `live_id` bigint NOT NULL, -- ライブID
-    `start` int NOT NULL DEFAULT 0, -- ゲームが開始したかどうか
-    INDEX (`room_id`)
+  `room_id` bigint NOT NULL AUTO_INCREMENT PRIMARY KEY, -- ルームID
+  `live_id` bigint NOT NULL, -- ライブID
+  `start` int NOT NULL DEFAULT 0, -- ゲームが開始したかどうか
+  INDEX (`room_id`)
 );
 
 DROP TABLE IF EXISTS `room_member`;
@@ -27,5 +27,5 @@ CREATE TABLE `room_member` (
   `good` int, -- 各判定数(good)
   `bad` int, -- 各判定数(bad)
   `miss` int, -- 各判定数(miss)
-  INDEX (`id`, `room_id`)
+  PRIMARY KEY (`room_id`, `id`)
 );

@@ -7,3 +7,4 @@ format:
 
 test:
 	pytest -sv tests # User・Room APIのテストを実行, -s: テスト中の標準出力を表示, -v: より詳細なテスト結果を表示
+	mysql webapp < schema.sql
